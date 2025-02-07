@@ -24,7 +24,7 @@ SUPPORTED_4BIT_MODELS = [
 @dataclass
 class ModelConfig:
     # Model parameters
-    model_name: str = "unsloth/Llama-3.2-3B-Instruct"
+    model_name: str = "unsloth/Llama-3.2-1B-Instruct-bnb-4bit"
     max_seq_length: int = 2048
     dtype: Optional[str] = None
     load_in_4bit: bool = True
@@ -41,8 +41,12 @@ class ModelConfig:
     gradient_accumulation_steps: int = 2
     warmup_steps: int = 5
     num_train_epochs: int = 1
+    max_steps: int = 100
     learning_rate: float = 2e-4
     output_dir: str = "outputs"
+
+    # Dataset parameters
+    test_size: float = 0.01
     
     def __post_init__(self):
         if self.target_modules is None:
