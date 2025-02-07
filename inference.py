@@ -15,12 +15,19 @@ def prepare_for_inference(dataset, instruction):
     print('Number of test inputs extracted: ', len(inputs_extracted))
     return inputs_extracted
 
-
 def get_response(text_output):
     response_start = "<|start_header_id|>assistant<|end_header_id|>\n\n"
-    response_string = text_output[0].split(response_start)[1].replace("<|eot_id|>", "").replace("<|end_of_text|>", "")
-    classification = response_string.split()[0].lower()
-    return classification
+    try:
+        split_output = text_output[0].split(response_start)
+        if len(split_output) < 2 or not split_output[1].strip():
+            return "unknown"
+        response_string = split_output[1].replace("<|eot_id|>", "").replace("<|end_of_text|>", "")
+        if not response_string.strip():
+            return "unknown"
+        classification = response_string.split()[0].lower()
+        return classification
+    except (IndexError, AttributeError):
+        return "unknown"
 
 
 def predict_from_messages(messages, tokenizer, dataset_mapped, model, batch_size=32, max_length=1024):
@@ -78,14 +85,15 @@ def predict_from_messages(messages, tokenizer, dataset_mapped, model, batch_size
     
     return predicted_outputs, correct_outputs
 
-def count_correct(predicted_outputs, correct_outputs, original_dataset):
+def count_correct(predicted_outputs, correct_outputs, original_dataset, print_examples=False):
     correct_count = 0
     for i in range(len(predicted_outputs)):
         if predicted_outputs[i] == correct_outputs[i]:
             correct_count += 1
         # Print every 50th statement
-        if i % 50 == 0:
-            print(original_dataset[i]['statement'], ":  ", predicted_outputs[i], "  ", correct_outputs[i])
+        if print_examples:
+            if i % 50 == 0:
+                print(original_dataset[i]['statement'], ":  ", predicted_outputs[i], "  ", correct_outputs[i])
     print("Accuracy: ", correct_count / len(predicted_outputs))
 
 
