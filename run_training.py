@@ -64,7 +64,7 @@ def prepare_train_test_datasets(tokenizer, config):
     return train_dataset, test_dataset, instruction
 
 
-def setup_trainer(model, tokenizer, train_dataset, config):
+def setup_trainer(model, tokenizer, train_dataset, config, print_setup_check=False):
     trainer = SFTTrainer(
         model = model,
         tokenizer = tokenizer,
@@ -85,9 +85,10 @@ def setup_trainer(model, tokenizer, train_dataset, config):
     )
 
     # Check that training is correclty splitting out the instruction and response
-    print(tokenizer.decode(trainer.train_dataset[5]["input_ids"]))
-    space = tokenizer(" ", add_special_tokens = False).input_ids[0]
-    print(tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["labels"]]))
+    if print_setup_check:
+        print(tokenizer.decode(trainer.train_dataset[5]["input_ids"]))
+        space = tokenizer(" ", add_special_tokens = False).input_ids[0]
+        print(tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["labels"]]))
 
     return trainer
 
