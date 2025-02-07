@@ -1,5 +1,20 @@
 import torch
 from tqdm import tqdm
+from unsloth import FastLanguageModel
+
+
+def prepare_for_inference(dataset, instruction):
+    inputs_extracted = []
+    for i in range(len(dataset)):
+        inputs_extracted.append(
+            [
+                {"role": "system", "content": instruction},
+                {"role" : "user", "content": dataset[i]['statement']}
+            ]
+        )
+    print('Number of test inputs extracted: ', len(inputs_extracted))
+    return inputs_extracted
+
 
 def get_response(text_output):
     response_start = "<|start_header_id|>assistant<|end_header_id|>\n\n"
@@ -8,7 +23,7 @@ def get_response(text_output):
     return classification
 
 
-def predict_from_messages(messages, tokenizer,dataset_mapped, model, batch_size=32, max_length=1024):
+def predict_from_messages(messages, tokenizer, dataset_mapped, model, batch_size=32, max_length=1024):
     predicted_outputs = []
     correct_outputs = []
     
@@ -72,3 +87,10 @@ def count_correct(predicted_outputs, correct_outputs, original_dataset):
         if i % 50 == 0:
             print(original_dataset[i]['statement'], ":  ", predicted_outputs[i], "  ", correct_outputs[i])
     print("Accuracy: ", correct_count / len(predicted_outputs))
+
+
+def run_inference_with_stats(model, tokenizer, inputs_extracted, dataset, batch_size=32, max_length=1024):
+    FastLanguageModel.for_inference(model)
+    predicted_outputs, correct_outputs = predict_from_messages(inputs_extracted, tokenizer, dataset, model, batch_size, max_length)
+    print("Running inference with stats...\n")
+    count_correct(predicted_outputs, correct_outputs, dataset)
