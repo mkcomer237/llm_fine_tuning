@@ -3,10 +3,11 @@ from load_llm import setup_model, get_training_arguments
 from llm_config import ModelConfig
 from inference import prepare_for_inference, run_inference_with_stats
 from datasets import load_dataset
-from transformers import DataCollatorForSeq2Seq
+from transformers import DataCollatorForSeq2Seq, EarlyStoppingCallback
 from unsloth.chat_templates import get_chat_template
 from unsloth.chat_templates import train_on_responses_only
 from trl import SFTTrainer
+from sklearn.metrics import accuracy_score
 
 
 def generate_instruction(dataset):
@@ -64,17 +65,34 @@ def prepare_train_test_datasets(tokenizer, config):
     return train_dataset, test_dataset, instruction
 
 
-def setup_trainer(model, tokenizer, train_dataset, config, print_setup_check=False):
+def compute_metrics(eval_pred):
+    """Compute accuracy for evaluation and print results."""
+    predictions, labels = eval_pred
+    predictions = predictions.argmax(-1)
+    accuracy = accuracy_score(labels, predictions)
+    print(f"\nEvaluation Accuracy: {accuracy:.4f}")
+    return {"accuracy": accuracy}
+
+
+def setup_trainer(model, tokenizer, train_dataset, test_dataset, config, print_setup_check=False):
+    # Add early stopping callback
+    early_stopping = EarlyStoppingCallback(
+        early_stopping_patience=config.early_stopping_patience
+    )
+
     trainer = SFTTrainer(
-        model = model,
-        tokenizer = tokenizer,
-        train_dataset = train_dataset,
-        dataset_text_field = "text",
-        max_seq_length = config.max_seq_length,
-        data_collator = DataCollatorForSeq2Seq(tokenizer = tokenizer),
-        dataset_num_proc = 4,
-        packing = False, # Can make training 5x faster for short sequences.
-        args = get_training_arguments(config),
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,  # Add test dataset for evaluation
+        compute_metrics=compute_metrics,  # Add metrics computation function
+        dataset_text_field="text",
+        max_seq_length=config.max_seq_length,
+        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer),
+        dataset_num_proc=4,
+        packing=False,
+        args=get_training_arguments(config),
+        callbacks=[early_stopping],  # Add callbacks
     )
 
     # Set the trainer up to only train on the loss from the outputs/classifications
@@ -91,7 +109,6 @@ def setup_trainer(model, tokenizer, train_dataset, config, print_setup_check=Fal
         print(tokenizer.decode([space if x == -100 else x for x in trainer.train_dataset[5]["labels"]]))
 
     return trainer
-
 
 
 def main():
@@ -111,9 +128,9 @@ def main():
 
     # Train the model
     # Set up SFTTrainer with config settings
-    trainer = setup_trainer(model, tokenizer, train_dataset, config)
+    trainer = setup_trainer(model, tokenizer, train_dataset, test_dataset, config)
 
-    # Train the model
+    # Train with evaluation
     FastLanguageModel.for_training(model)
     trainer.train()
 

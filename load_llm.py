@@ -15,13 +15,22 @@ def get_training_arguments(config: ModelConfig) -> TrainingArguments:
         learning_rate=config.learning_rate,
         fp16=not is_bfloat16_supported(),
         bf16=is_bfloat16_supported(),
-        logging_steps=50,
+        logging_steps=config.eval_steps,
         optim="adamw_8bit",
         weight_decay=0.01,
         lr_scheduler_type="linear",
         seed=3407,
         output_dir=config.output_dir,
         report_to="none",
+        # Evaluation code
+        evaluation_strategy="steps",
+        eval_steps=config.eval_steps,
+        save_strategy="steps",
+        save_steps=config.eval_steps,
+        save_total_limit=1,  # Keep only the best model
+        load_best_model_at_end=True,
+        metric_for_best_model="accuracy",
+        greater_is_better=True,
     )
 
 def setup_model(config: ModelConfig):

@@ -47,7 +47,11 @@ class ModelConfig:
 
     # Dataset parameters
     test_size: float = 0.01
-    
+
+    # Early stopping parameters
+    eval_steps: int = 25  # Evaluate every 20 steps
+    early_stopping_patience: int = 3  # Stop if no improvement for 3 evaluations
+
     def __post_init__(self):
         if self.target_modules is None:
             self.target_modules = [
