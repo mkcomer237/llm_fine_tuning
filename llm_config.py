@@ -24,12 +24,12 @@ SUPPORTED_4BIT_MODELS = [
 @dataclass
 class ModelConfig:
     # Model parameters
-    model_name: str = "unsloth/Llama-3.2-1B-Instruct-bnb-4bit"
+    model_name: str = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
     max_seq_length: int = 2048
     dtype: Optional[str] = None
     load_in_4bit: bool = True
     hf_token: Optional[str] = None
-    
+
     # LoRA parameters
     lora_r: int = 16
     lora_alpha: int = 16
@@ -46,7 +46,7 @@ class ModelConfig:
     output_dir: str = "outputs"
 
     # Dataset parameters
-    test_size: float = 0.01
+    test_size: float = 0.02
     
     def __post_init__(self):
         if self.target_modules is None:
