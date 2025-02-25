@@ -61,7 +61,7 @@ def prepare_train_test_datasets(tokenizer, config):
 
     # Create a new text column in the dataset for training
     train_dataset = dataset['train'].map(lambda x: format_chat_template(x, tokenizer, instruction))
-    test_dataset = dataset['test']
+    test_dataset = dataset['test'].map(lambda x: format_chat_template(x, tokenizer, instruction))
     return train_dataset, test_dataset, instruction
 
 
@@ -84,15 +84,14 @@ def setup_trainer(model, tokenizer, train_dataset, test_dataset, config, print_s
         model=model,
         tokenizer=tokenizer,
         train_dataset=train_dataset,
-        eval_dataset=test_dataset,  # Add test dataset for evaluation
-        compute_metrics=compute_metrics,  # Add metrics computation function
+        eval_dataset=test_dataset,
         dataset_text_field="text",
         max_seq_length=config.max_seq_length,
         data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer),
         dataset_num_proc=4,
         packing=False,
         args=get_training_arguments(config),
-        callbacks=[early_stopping],  # Add callbacks
+        callbacks=[early_stopping], # Early stopping will be based on loss on the test dataset
     )
 
     # Set the trainer up to only train on the loss from the outputs/classifications

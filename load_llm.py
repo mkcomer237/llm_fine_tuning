@@ -29,8 +29,8 @@ def get_training_arguments(config: ModelConfig) -> TrainingArguments:
         save_steps=config.eval_steps,
         save_total_limit=1,  # Keep only the best model
         load_best_model_at_end=True,
-        metric_for_best_model="accuracy",
-        greater_is_better=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
     )
 
 def setup_model(config: ModelConfig):
