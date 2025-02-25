@@ -74,9 +74,21 @@ def compute_metrics(eval_pred):
     return {"accuracy": accuracy}
 
 
+class CustomEarlyStoppingCallback(EarlyStoppingCallback):
+    """Custom early stopping callback that prints a message when triggered."""
+
+    def on_train_end(self, args, state, control, **kwargs):
+        if self.stopped_early:
+            print("\n" + "="*50)
+            print("EARLY STOPPING TRIGGERED!")
+            print(f"Training stopped at epoch {state.epoch} because metric {self.metric_name} didn't improve for {self.early_stopping_patience} evaluations.")
+            print("="*50 + "\n")
+        return super().on_train_end(args, state, control, **kwargs)
+
+
 def setup_trainer(model, tokenizer, train_dataset, test_dataset, config, print_setup_check=False):
-    # Add early stopping callback
-    early_stopping = EarlyStoppingCallback(
+    # Add early stopping callback with custom implementation
+    early_stopping = CustomEarlyStoppingCallback(
         early_stopping_patience=config.early_stopping_patience
     )
 

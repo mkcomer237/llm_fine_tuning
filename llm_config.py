@@ -46,7 +46,7 @@ class ModelConfig:
     output_dir: str = "outputs"
 
     # Dataset parameters
-    test_size: float = 0.02
+    test_size: float = 0.05
 
     # Early stopping parameters
     eval_steps: int = 25  # Evaluate every 20 steps
