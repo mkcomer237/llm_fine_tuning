@@ -52,14 +52,16 @@ def predict_from_messages(messages, tokenizer, dataset_mapped, model, batch_size
         # Add attention mask to tell model which tokens to ignore
         attention_mask = (batch_inputs != tokenizer.pad_token_id).to("cuda")
 
-        # Generate for entire batch at once
+        # Generate for entire batch at once with optimized parameters
         batch_outputs = model.generate(
             input_ids = batch_inputs,
             attention_mask = attention_mask,
             max_new_tokens = 64,
             use_cache = True,
-            temperature = 1.0,
-            min_p = 0.2
+            temperature = 0.7,  # Lower temperature for more deterministic outputs in classification
+            min_p = 0.05,       # Lower min_p for classification tasks
+            do_sample = False,  # Set to False for deterministic outputs in classification
+            num_beams = 1,      # No need for beam search in classification
         )
         
         # Decode all outputs in batch
@@ -72,17 +74,18 @@ def predict_from_messages(messages, tokenizer, dataset_mapped, model, batch_size
         # Process each output in the batch
         for j, text_output in enumerate(batch_text_outputs):
             try: 
-                predicted_outputs.append(get_response([text_output]))  # Note: wrapped in list since get_response expects list
-            except(Exception) as e:
-                print("Error in get_response...\n")
-                print(i, j, text_output)
+                predicted_outputs.append(get_response([text_output]))
+            except Exception as e:
+                print(f"Error in get_response for item {i+j}...\n")
+                print(text_output)
                 print(e)
-                continue
+                predicted_outputs.append("unknown")  # Add fallback value
+
             correct_output = dataset_mapped[i + j]['status']
             correct_outputs.append(correct_output.lower())
 
     torch.cuda.empty_cache()
-    
+
     return predicted_outputs, correct_outputs
 
 def count_correct(predicted_outputs, correct_outputs, original_dataset, print_examples=False):
