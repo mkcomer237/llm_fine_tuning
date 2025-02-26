@@ -24,7 +24,7 @@ SUPPORTED_4BIT_MODELS = [
 @dataclass
 class ModelConfig:
     # Model parameters
-    model_name: str = "unsloth/Llama-3.2-1B-Instruct-bnb-4bit"
+    model_name: str = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
     max_seq_length: int = 2048
     dtype: Optional[str] = None
     load_in_4bit: bool = True
@@ -50,7 +50,7 @@ class ModelConfig:
 
     # Early stopping parameters
     eval_steps: int = 25  # Evaluate every 20 steps
-    early_stopping_patience: int = 3  # Stop if no improvement for 3 evaluations
+    early_stopping_patience: int = 4  # Stop if no improvement for 3 evaluations
 
     def __post_init__(self):
         if self.target_modules is None:

@@ -78,11 +78,15 @@ class CustomEarlyStoppingCallback(EarlyStoppingCallback):
     """Custom early stopping callback that prints a message when triggered."""
 
     def on_train_end(self, args, state, control, **kwargs):
-        if self.stopped_early:
-            print("\n" + "="*50)
-            print("EARLY STOPPING TRIGGERED!")
-            print(f"Training stopped at epoch {state.epoch} because metric {self.metric_name} didn't improve for {self.early_stopping_patience} evaluations.")
-            print("="*50 + "\n")
+        # The base class doesn't have a 'stopped_early' attribute
+        # We need to check if early stopping was triggered another way
+        if hasattr(self, 'best_metric') and self.best_metric is not None:
+            # Check if training ended before max epochs
+            if state.epoch < args.num_train_epochs:
+                print("\n" + "="*50)
+                print("EARLY STOPPING TRIGGERED!")
+                print(f"Training stopped at epoch {state.epoch} because metric {self.metric_name} didn't improve for {self.early_stopping_patience} evaluations.")
+                print("="*50 + "\n")
         return super().on_train_end(args, state, control, **kwargs)
 
 
